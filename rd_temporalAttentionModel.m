@@ -3,6 +3,11 @@ function decision = rd_temporalAttentionModel(soa)
 %% Setup
 plotFigs = 0;
 
+% soa
+if ~exist('soa','var')
+    soa = 250;
+end
+
 % basic
 x = 0:5000;
 ExWidth = 10;
@@ -29,8 +34,9 @@ attnGainX = rd_nmMakeStim(x, Ax, AxWidth, repmat(1,1,nStim), 'gaussian');
 % endo attention
 Endox = stimCenters(2);
 EndoxWidth = AxWidth*2;
-EndoAmp = Apeak-Abase;
-EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmp, 'gaussian');
+EndoAmps = repmat(Apeak-Abase,1,numel(Endox));
+EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmps, 'gaussian');
+% EndoGain = NaN;
 
 % IOR
 IORx = Ax + 200;
@@ -70,7 +76,7 @@ else
 end
 
 %% Add Endo
-if ~isnan(IORGain)
+if ~isnan(EndoGain)
     attnGain = attnGain + EndoGain;
 end
 

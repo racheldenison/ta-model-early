@@ -3,7 +3,7 @@
 % wrapper for rd_temporalAttentionModel
 
 %% setup
-nTrials = 2000;
+nTrials = 10000;
 soas = [100 150 200 250 300 400 500 700 1000];
 % soas = 100;
 
@@ -29,5 +29,5 @@ end
 %% plot figs
 figure
 plot(repmat(soas,2,1)', accMean','.-')
-xlabel('SOA')
+xlabel('SOA (ms)')
 ylabel('accuracy')
