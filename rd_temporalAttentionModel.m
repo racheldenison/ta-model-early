@@ -32,11 +32,11 @@ attnGain = NaN;
 attnGainX = rd_nmMakeStim(x, Ax, AxWidth, repmat(1,1,nStim), 'gaussian');
 
 % endo attention
-Endox = stimCenters(2);
+Endox = stimCenters;
 EndoxWidth = AxWidth*2;
 EndoAmps = repmat(Apeak-Abase,1,numel(Endox));
-EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmps, 'gaussian');
-% EndoGain = NaN;
+% EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmps, 'gaussian');
+EndoGain = NaN;
 
 % IOR
 IORx = Ax + 200;
