@@ -1,4 +1,4 @@
-function decision = rd_temporalAttentionModel(soa)
+function [decision evidence] = rd_temporalAttentionModel(soa, endoCond)
 
 %% Setup
 plotFigs = 0;
@@ -6,6 +6,11 @@ plotFigs = 0;
 % soa
 if ~exist('soa','var')
     soa = 250;
+end
+
+% endo condition
+if ~exist('endoCond','var')
+    endoCond = 'no-endo'; % options: 'no-endo','endoT1','endoT2','endoT1T2'
 end
 
 % basic
@@ -32,11 +37,23 @@ attnGain = NaN;
 attnGainX = rd_nmMakeStim(x, Ax, AxWidth, repmat(1,1,nStim), 'gaussian');
 
 % endo attention
-Endox = stimCenters;
-EndoxWidth = AxWidth*2;
-EndoAmps = repmat(Apeak-Abase,1,numel(Endox));
-% EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmps, 'gaussian');
-EndoGain = NaN;
+if strcmp(endoCond,'no-endo')
+    EndoGain = NaN;
+else
+    switch endoCond
+        case 'endoT1'
+            Endox = stimCenters(1);
+        case 'endoT2'
+            Endox = stimCenters(2);
+        case 'endoT1T2'
+            Endox = stimCenters;
+        otherwise
+            error('endoCond not recognized')
+    end
+    EndoxWidth = AxWidth*200/30; % *2
+    EndoAmps = repmat(Apeak-Abase,1,numel(Endox));
+    EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmps, 'gaussian');
+end
 
 % IOR
 IORx = Ax + 200;
@@ -56,7 +73,7 @@ IAxKernel = IAxKernel(IAxKernel>max(IAxKernel)/50);
 IAxKernel = [IAxKernel(end-IAxShift+1:end) IAxKernel(1:end-IAxShift)];
 
 % evidence accumulation
-noiseSigma = 4; % 4
+noiseSigma = 0; % 4
 evidenceScale = 0.02; % 0.02
 bounds = [.8 -.8];
 decisionWindowDur = min(diff(stimCenters));
