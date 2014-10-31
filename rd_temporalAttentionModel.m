@@ -33,8 +33,8 @@ AxWidth = 30;
 Apeak =  2;
 Abase = 1;
 attnGain = NaN;
-% attnGainX = NaN;
 attnGainX = rd_nmMakeStim(x, Ax, AxWidth, repmat(1,1,nStim), 'gaussian');
+% attnGainX = NaN; Ax = NaN;
 
 % endo attention
 if strcmp(endoCond,'no-endo')
@@ -50,17 +50,18 @@ else
         otherwise
             error('endoCond not recognized')
     end
-    EndoxWidth = AxWidth*200/30; % *2
+    EndoxWidth = AxWidth*2; % *2
     EndoAmps = repmat(Apeak-Abase,1,numel(Endox));
     EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmps, 'gaussian');
 end
 
 % IOR
-IORx = Ax + 200;
+% IORx = Ax + 200;
+IORx = stimCenters + 300 - round(stimWidth/2);
 IORxWidth = AxWidth*4;
 IORAmps = repmat((Apeak-Abase)/2, 1, nStim);
-IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
-% IORGain = NaN;
+% IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
+IORGain = NaN;
 
 % Alternatively, derive inhibitory attention component from excitatory one
 IAGain = NaN; % set to nan to turn off convolution
