@@ -50,7 +50,7 @@ else
         otherwise
             error('endoCond not recognized')
     end
-    EndoxWidth = AxWidth*2; % *2
+    EndoxWidth = AxWidth*2; % *2 *200/30
     EndoAmps = repmat(Apeak-Abase,1,numel(Endox));
     EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmps, 'gaussian');
 end
