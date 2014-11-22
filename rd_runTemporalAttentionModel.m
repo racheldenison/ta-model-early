@@ -6,7 +6,7 @@
 % nTrials = 10000;
 nTrials = 1;
 soas = [100:50:500 800];
-% soas = 100;
+% soas = [100 250 800];
 endoConds = {'no-endo','endoT1','endoT2','endoT1T2'};
 
 %% run conditions
@@ -42,13 +42,13 @@ fprintf('\n')
 if isequal(endoConds,{'no-endo','endoT1','endoT2','endoT1T2'})
     evValidity{1}(1,:) = evMean(1,:,2); % T1 valid
     evValidity{1}(2,:) = evMean(1,:,3); % T1 invalid
-    evValidity{1}(3,:) = evMean(1,:,1); % T1 neutral - no endo
-    evValidity{1}(4,:) = evMean(1,:,4); % T1 neutral - endoT1T2
+    evValidity{1}(3,:) = evMean(1,:,4); % T1 neutral - endoT1T2
+    evValidity{1}(4,:) = evMean(1,:,1); % T1 neutral - no endo
     
     evValidity{2}(1,:) = evMean(2,:,3); % T2 valid
     evValidity{2}(2,:) = evMean(2,:,2); % T2 invalid
-    evValidity{2}(3,:) = evMean(2,:,1); % T2 neutral - no endo
-    evValidity{2}(4,:) = evMean(2,:,4); % T2 neutral - endoT1T2
+    evValidity{2}(3,:) = evMean(2,:,4); % T2 neutral - endoT1T2
+    evValidity{2}(4,:) = evMean(2,:,1); % T2 neutral - no endo
     
     % cuing effect and average across cue validities
     for iT = 1:numel(evValidity)
@@ -72,7 +72,7 @@ if numel(size(evMean))==2 % if 2-dimensional
     ylim([0 2.8])
 else
     % sorted by validity
-    cueValidityNames = {'valid','invalid','none','both'};
+    cueValidityNames = {'valid','invalid','both','none'};
     intervalNames = {'early','late'};
     evLims = [0 4];
     soaLims = [soas(1)-100 soas(end)+100];

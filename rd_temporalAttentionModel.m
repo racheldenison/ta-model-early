@@ -60,8 +60,8 @@ end
 IORx = stimCenters + 300 - round(stimWidth/2);
 IORxWidth = AxWidth*4;
 IORAmps = repmat((Apeak-Abase)/2, 1, nStim);
-% IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
-IORGain = NaN;
+IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
+% IORGain = NaN;
 
 % Alternatively, derive inhibitory attention component from excitatory one
 IAGain = NaN; % set to nan to turn off convolution
@@ -95,12 +95,12 @@ end
 
 %% Add Endo
 if ~isnan(EndoGain)
-    attnGain = attnGain + EndoGain;
+    attnGain = attnGain + EndoGain; %%%% +
 end
 
 %% Add IOR or other inhibitory component
 if ~isnan(IORGain)
-    attnGain = attnGain - IORGain;
+    attnGain = attnGain - IORGain; %%%% -
 elseif ~isnan(IAGain)
     % convolve with excitatory attention gain
     IA = conv(attnGain,IAxKernel);
