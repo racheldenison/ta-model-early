@@ -33,8 +33,8 @@ AxWidth = 30;
 Apeak =  2;
 Abase = 1;
 attnGain = NaN;
-attnGainX = rd_nmMakeStim(x, Ax, AxWidth, repmat(1,1,nStim), 'gaussian');
-% attnGainX = NaN; Ax = NaN;
+% attnGainX = rd_nmMakeStim(x, Ax, AxWidth, repmat(1,1,nStim), 'gaussian');
+attnGainX = NaN; Ax = NaN;
 
 % endo attention
 if strcmp(endoCond,'no-endo')
@@ -60,8 +60,17 @@ end
 IORx = stimCenters + 300 - round(stimWidth/2);
 IORxWidth = AxWidth*4;
 IORAmps = repmat((Apeak-Abase)/2, 1, nStim);
-IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
-% IORGain = NaN;
+% IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
+IORGain = NaN;
+
+% symmetrical suppression
+% note: we don't want a stimulus to experience its own self-generated
+% suppression
+ISx = stimCenters;
+ISxWidth = AxWidth*4;
+ISAmps = repmat(Apeak-Abase,1,numel(ISx));
+% ISGain = rd_nmMakeStim(x, ISx, ISxWidth, ISAmps, 'gaussian');
+ISGain = NaN;
 
 % Alternatively, derive inhibitory attention component from excitatory one
 IAGain = NaN; % set to nan to turn off convolution
@@ -72,6 +81,16 @@ IAxKernel = makeGaussian(x,0,IAxWidth);
 IAxShift = 0;
 IAxKernel = IAxKernel(IAxKernel>max(IAxKernel)/50);
 IAxKernel = [IAxKernel(end-IAxShift+1:end) IAxKernel(1:end-IAxShift)];
+
+% surround suppression (Mexican-hat style)
+SSxShift = 50;
+SSx = stimCenters + SSxShift;
+SSxWidth1 = AxWidth*3; 
+SSAmps1 = repmat(Apeak-Abase,1,numel(SSx));
+SSGain1 = rd_nmMakeStim(x, SSx, SSxWidth1, SSAmps1, 'gaussian');
+SSGain2 = rd_nmMakeStim(x, SSx, SSxWidth1*2, SSAmps1/2, 'gaussian');
+SSGain = SSGain1 - SSGain2;
+% SSGain = NaN;
 
 % evidence accumulation
 noiseSigma = 0; % 4
@@ -101,11 +120,18 @@ end
 %% Add IOR or other inhibitory component
 if ~isnan(IORGain)
     attnGain = attnGain - IORGain; %%%% -
+elseif ~isnan(ISGain)
+    attnGain = attnGain - ISGain; %%%% -
 elseif ~isnan(IAGain)
     % convolve with excitatory attention gain
     IA = conv(attnGain,IAxKernel);
     IA = IA(1:length(attnGain));
     attnGain = attnGain - IA + IAxAmp;
+end
+
+%% Add surround suppression-style component
+if ~isnan(SSGain)
+    attnGain = attnGain + SSGain;
 end
 
 %% Stimulation field and suppressive field
