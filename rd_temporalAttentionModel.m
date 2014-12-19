@@ -13,8 +13,11 @@ if ~exist('endoCond','var')
     endoCond = 'no-endo'; % options: 'no-endo','endoT1','endoT2','endoT1T2'
 end
 
+% endo type
+endoType = 'SSHat'; % options: 'Gaussian', 'SSHat'
+
 % basic
-x = 0:2000; % 0:5000
+x = 0:1000; % 0:2000
 ExWidth = 10;
 baselineMod = 0;
 
@@ -53,6 +56,22 @@ else
     EndoxWidth = AxWidth*2; % *2 *200/30
     EndoAmps = repmat(Apeak-Abase,1,numel(Endox));
     EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmps, 'gaussian');
+    
+    switch endoType
+        case 'SSHat'
+            % surround suppression (Mexican-hat style)
+            SSxShift = 80;
+            SSx = Endox + SSxShift;
+            SSxWidthCenter = AxWidth*3;
+            SSAmpsCenter = repmat(Apeak-Abase,1,numel(SSx));
+            SSGainCenter = rd_nmMakeStim(x, SSx, SSxWidthCenter, SSAmpsCenter, 'gaussian');
+            SSGainSurround = rd_nmMakeStim(x, SSx, SSxWidthCenter*2, SSAmpsCenter/2, 'gaussian');
+            SSGain = SSGainCenter - SSGainSurround;
+            % flatten top
+            SSGainCutoff = 0.7*(max(SSGain)-min(SSGain)) + min(SSGain);
+            SSGain(SSGain>SSGainCutoff) = SSGainCutoff;
+            EndoGain = SSGain;
+    end
 end
 
 % IOR
@@ -64,8 +83,6 @@ IORAmps = repmat((Apeak-Abase)/2, 1, nStim);
 IORGain = NaN;
 
 % symmetrical suppression
-% note: we don't want a stimulus to experience its own self-generated
-% suppression
 ISx = stimCenters;
 ISxWidth = AxWidth*4;
 ISAmps = repmat(Apeak-Abase,1,numel(ISx));
@@ -81,19 +98,6 @@ IAxKernel = makeGaussian(x,0,IAxWidth);
 IAxShift = 0;
 IAxKernel = IAxKernel(IAxKernel>max(IAxKernel)/50);
 IAxKernel = [IAxKernel(end-IAxShift+1:end) IAxKernel(1:end-IAxShift)];
-
-% surround suppression (Mexican-hat style)
-SSxShift = 50;
-SSx = stimCenters + SSxShift;
-SSxWidthCenter = AxWidth*3; 
-SSAmpsCenter = repmat(Apeak-Abase,1,numel(SSx));
-SSGainCenter = rd_nmMakeStim(x, SSx, SSxWidthCenter, SSAmpsCenter, 'gaussian');
-SSGainSurround = rd_nmMakeStim(x, SSx, SSxWidthCenter*2, SSAmpsCenter/2, 'gaussian');
-SSGain = SSGainCenter - SSGainSurround;
-% flatten top
-SSGainCutoff = 0.7*(max(SSGain)-min(SSGain)) + min(SSGain);
-SSGain(SSGain>SSGainCutoff) = SSGainCutoff; 
-% SSGain = NaN;
 
 % evidence accumulation
 noiseSigma = 0; % 4
@@ -130,11 +134,6 @@ elseif ~isnan(IAGain)
     IA = conv(attnGain,IAxKernel);
     IA = IA(1:length(attnGain));
     attnGain = attnGain - IA + IAxAmp;
-end
-
-%% Add surround suppression-style component
-if ~isnan(SSGain)
-    attnGain = attnGain + SSGain;
 end
 
 %% Stimulation field and suppressive field
@@ -208,7 +207,7 @@ decision(decision==0) = guesses(decision==0);
     
 %% Plot figs
 if plotFigs
-    % figure
+    figure
     % cla
     hold on
     plot(x, stimulus,'k')
@@ -228,4 +227,6 @@ if plotFigs
     
     % legend('stim','attn','Eraw','E','I','R')
     legend('stim','attn','Eraw','E','evidence')
+    
+    title(sprintf('soa = %d ms, %s', soa, endoCond))
 end
