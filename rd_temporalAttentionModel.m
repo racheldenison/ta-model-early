@@ -1,7 +1,7 @@
 function [decision evidence] = rd_temporalAttentionModel(soa, endoCond)
 
 %% Setup
-plotFigs = 0;
+plotFigs = 1;
 
 % soa
 if ~exist('soa','var')
@@ -14,7 +14,7 @@ if ~exist('endoCond','var')
 end
 
 % basic
-x = 0:5000;
+x = 0:2000; % 0:5000
 ExWidth = 10;
 baselineMod = 0;
 
@@ -85,11 +85,14 @@ IAxKernel = [IAxKernel(end-IAxShift+1:end) IAxKernel(1:end-IAxShift)];
 % surround suppression (Mexican-hat style)
 SSxShift = 50;
 SSx = stimCenters + SSxShift;
-SSxWidth1 = AxWidth*3; 
-SSAmps1 = repmat(Apeak-Abase,1,numel(SSx));
-SSGain1 = rd_nmMakeStim(x, SSx, SSxWidth1, SSAmps1, 'gaussian');
-SSGain2 = rd_nmMakeStim(x, SSx, SSxWidth1*2, SSAmps1/2, 'gaussian');
-SSGain = SSGain1 - SSGain2;
+SSxWidthCenter = AxWidth*3; 
+SSAmpsCenter = repmat(Apeak-Abase,1,numel(SSx));
+SSGainCenter = rd_nmMakeStim(x, SSx, SSxWidthCenter, SSAmpsCenter, 'gaussian');
+SSGainSurround = rd_nmMakeStim(x, SSx, SSxWidthCenter*2, SSAmpsCenter/2, 'gaussian');
+SSGain = SSGainCenter - SSGainSurround;
+% flatten top
+SSGainCutoff = 0.7*(max(SSGain)-min(SSGain)) + min(SSGain);
+SSGain(SSGain>SSGainCutoff) = SSGainCutoff; 
 % SSGain = NaN;
 
 % evidence accumulation
