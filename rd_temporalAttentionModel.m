@@ -10,16 +10,21 @@ end
 
 % endo condition
 if ~exist('endoCond','var')
-    endoCond = 'no-endo'; % options: 'no-endo','endoT1','endoT2','endoT1T2'
+    endoCond = 'endoT1T2'; % options: 'no-endo','endoT1','endoT2','endoT1T2'
 end
 
 % endo type
-endoType = 'SSHat'; % options: 'Gaussian', 'SSHat'
+endoType = 'Gaussian'; % options: 'Gaussian', 'SSHat'
 
+% attentional normalization
+normalizeAttentionFields = 1;
+
+%% Stimuli and attention components
 % basic
-x = 0:1000; % 0:2000
+x = 0:2000; % 0:2000
 ExWidth = 10;
 baselineMod = 0;
+sigma = 1e-6;
 
 % stim
 % soa = 250;
@@ -134,6 +139,31 @@ elseif ~isnan(IAGain)
     IA = conv(attnGain,IAxKernel);
     IA = IA(1:length(attnGain));
     attnGain = attnGain - IA + IAxAmp;
+end
+
+%% Normalize attention fields
+if normalizeAttentionFields
+    AIxWidth = EndoxWidth*3;
+    AIxKernel = makeGaussian(x,500,AIxWidth);
+    % Suppressive drive
+    AI = conv2sepYcirc(attnGain,AIxKernel); % conv2sepYcirc stopped
+%     working, whyyyy??
+%     AI = zeros(size(x));
+%     for i = 1:numel(Endox)
+%         AI = AI + rd_nmMakeStim(x, Endox(i), AIxWidth, EndoAmps(i)/2, 'gaussian') + 1;
+%     end
+    
+    % Normalization
+    attnGain0 = attnGain; % just store original attnGain (for debugging)
+    attnGain = (attnGain - Abase) ./ (AI + sigma) + Abase;
+    
+    if plotFigs
+        figure
+        hold on
+        plot(x,attnGain0)
+        plot(x,AI,'k')
+        plot(x,attnGain,'g')
+    end
 end
 
 %% Stimulation field and suppressive field
