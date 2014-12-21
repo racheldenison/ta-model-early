@@ -5,7 +5,7 @@ plotFigs = 1;
 
 % soa
 if ~exist('soa','var')
-    soa = 250;
+    soa = 800;
 end
 
 % endo condition
@@ -143,11 +143,10 @@ end
 
 %% Normalize attention fields
 if normalizeAttentionFields
-    AIxWidth = EndoxWidth*3;
-    AIxKernel = makeGaussian(x,500,AIxWidth);
+    AIxWidth = AxWidth*6;
+    AIxKernel = makeGaussian(x(1:1000),500,AIxWidth); % note, the kernel has to be no longer than it needs to be
     % Suppressive drive
-    AI = conv2sepYcirc(attnGain,AIxKernel); % conv2sepYcirc stopped
-%     working, whyyyy??
+    AI = conv2sepYcirc(attnGain - Abase, AIxKernel);
 %     AI = zeros(size(x));
 %     for i = 1:numel(Endox)
 %         AI = AI + rd_nmMakeStim(x, Endox(i), AIxWidth, EndoAmps(i)/2, 'gaussian') + 1;
@@ -155,14 +154,15 @@ if normalizeAttentionFields
     
     % Normalization
     attnGain0 = attnGain; % just store original attnGain (for debugging)
-    attnGain = (attnGain - Abase) ./ (AI + sigma) + Abase;
+    attnGain = attnGain0 ./ (AI + 1 + sigma);
     
     if plotFigs
-        figure
+        figure(1)
         hold on
         plot(x,attnGain0)
         plot(x,AI,'k')
         plot(x,attnGain,'g')
+        legend('orig attn gain','attentional suppressive drive','resulting attn gain')
     end
 end
 
@@ -237,7 +237,7 @@ decision(decision==0) = guesses(decision==0);
     
 %% Plot figs
 if plotFigs
-    figure
+    figure(2)
     % cla
     hold on
     plot(x, stimulus,'k')
