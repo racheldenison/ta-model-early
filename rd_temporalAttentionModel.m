@@ -16,8 +16,14 @@ end
 % endo type
 endoType = 'Gaussian'; % options: 'Gaussian', 'SSHat'
 
+% proporational allocation of attention (based on cue validity)
+prop = [0.75 0.25];
+
 % attentional normalization
 normalizeAttentionFields = 1;
+
+% compressive nonlinearity
+compressiveNonlinearity = 1;
 
 %% Stimuli and attention components
 % basic
@@ -48,18 +54,20 @@ attnGainX = NaN; Ax = NaN;
 if strcmp(endoCond,'no-endo')
     EndoGain = NaN;
 else
+    Endox = stimCenters;
     switch endoCond
         case 'endoT1'
-            Endox = stimCenters(1);
+            endoProps = [prop(1) prop(2)]; % 1 = high, 2 = low
         case 'endoT2'
-            Endox = stimCenters(2);
+            endoProps = [prop(2) prop(1)];
         case 'endoT1T2'
-            Endox = stimCenters;
+            endoProps = [mean(prop) mean(prop)];
+%             endoProps = [max(prop) max(prop)];
         otherwise
             error('endoCond not recognized')
     end
     EndoxWidth = AxWidth*2; % *2 *200/30
-    EndoAmps = repmat(Apeak-Abase,1,numel(Endox));
+    EndoAmps = repmat(Apeak-Abase,1,numel(Endox)).*endoProps;
     EndoGain = rd_nmMakeStim(x, Endox, EndoxWidth, EndoAmps, 'gaussian');
     
     switch endoType
@@ -157,6 +165,7 @@ if normalizeAttentionFields
     attnGain = attnGain0 ./ (AI + 1 + sigma);
     
     if plotFigs
+%         figure
         figure(1)
         hold on
         plot(x,attnGain0)
@@ -180,6 +189,27 @@ Eraw = conv(stimulus,ExKernel) + baselineMod;
 Eraw = Eraw(1:size(stimulus,2));
 Emax = max(Eraw(:));
 E = attnGain .* Eraw;
+
+%% Compressive nonlinearity
+if compressiveNonlinearity
+    logistic = @(x,L,k,x0) L./(1 + exp(-k.*(x-x0)));
+    
+    E0 = E;
+    E = logistic(E0,1,25,1);
+%     % test the logistic (for debugging)
+%     x = 0:.01:2;
+%     y = logistic(x,1,15,1);
+%     plot(x,y)
+
+    if plotFigs
+%         figure
+        figure(2)
+        hold on
+        plot(x,E0)
+        plot(x,E,'r')
+        legend('orig E','resulting E')
+    end
+end
 
 %% Accumulate evidence for the decision
 noise = noiseSigma*randn(size(x));
@@ -237,7 +267,7 @@ decision(decision==0) = guesses(decision==0);
     
 %% Plot figs
 if plotFigs
-    figure(2)
+    figure(3)
     % cla
     hold on
     plot(x, stimulus,'k')

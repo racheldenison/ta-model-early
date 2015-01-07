@@ -74,7 +74,7 @@ else
     % sorted by validity
     cueValidityNames = {'valid','invalid','both','none'};
     intervalNames = {'early','late'};
-    evLims = [0 4];
+    evLims = [0 1.5];
     soaLims = [soas(1)-100 soas(end)+100];
     colors = get(0,'DefaultAxesColorOrder');
     axTitle = '';
@@ -95,7 +95,7 @@ else
         ylim(evLims)
         
         if iT==1
-            legend(p1, cueValidityNames,'location','south')
+            legend(p1, cueValidityNames,'location','northeast')
         end
         %     rd_supertitle(subjectID);
         %     rd_raiseAxis(gca);
