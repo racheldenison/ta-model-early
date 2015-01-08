@@ -1,7 +1,7 @@
 function [decision evidence] = rd_temporalAttentionModel(soa, endoCond)
 
 %% Setup
-plotFigs = 1;
+plotFigs = 0;
 
 % soa
 if ~exist('soa','var')
@@ -16,8 +16,13 @@ end
 % endo type
 endoType = 'Gaussian'; % options: 'Gaussian', 'SSHat'
 
+% Ex kernel shape
+ExShape = 'square'; % options: 'Gaussian', 'square'
+
 % proporational allocation of attention (based on cue validity)
-prop = [0.75 0.25];
+% to make all or none, set prop = [1 0]
+% in endo section, can set neutral to be max(prop) or mean(prop)
+prop = [0.75 0.25]; % [high low], or [valid invalid]
 
 % attentional normalization
 normalizeAttentionFields = 1;
@@ -47,14 +52,19 @@ AxWidth = 30;
 Apeak =  2;
 Abase = 1;
 attnGain = NaN;
-% attnGainX = rd_nmMakeStim(x, Ax, AxWidth, repmat(1,1,nStim), 'gaussian');
-attnGainX = NaN; Ax = NaN;
+attnGainX = rd_nmMakeStim(x, Ax, AxWidth, repmat(1,1,nStim), 'gaussian');
+% attnGainX = NaN; Ax = NaN;
 
 % endo attention
 if strcmp(endoCond,'no-endo')
     EndoGain = NaN;
 else
-    Endox = stimCenters;
+    if strcmp(endoType,'Gaussian')
+        endoShift = 30; % can shift endo to align with the response instead of the stimulus
+    else
+        endoShift = 0;
+    end
+    Endox = stimCenters + endoShift;
     switch endoCond
         case 'endoT1'
             endoProps = [prop(1) prop(2)]; % 1 = high, 2 = low
@@ -76,7 +86,7 @@ else
             SSxShift = 80;
             SSx = Endox + SSxShift;
             SSxWidthCenter = AxWidth*3;
-            SSAmpsCenter = repmat(Apeak-Abase,1,numel(SSx));
+            SSAmpsCenter = EndoAmps;
             SSGainCenter = rd_nmMakeStim(x, SSx, SSxWidthCenter, SSAmpsCenter, 'gaussian');
             SSGainSurround = rd_nmMakeStim(x, SSx, SSxWidthCenter*2, SSAmpsCenter/2, 'gaussian');
             SSGain = SSGainCenter - SSGainSurround;
@@ -151,7 +161,7 @@ end
 
 %% Normalize attention fields
 if normalizeAttentionFields
-    AIxWidth = AxWidth*6;
+    AIxWidth = AxWidth*6; % *6
     AIxKernel = makeGaussian(x(1:1000),500,AIxWidth); % note, the kernel has to be no longer than it needs to be
     % Suppressive drive
     AI = conv2sepYcirc(attnGain - Abase, AIxKernel);
@@ -165,8 +175,8 @@ if normalizeAttentionFields
     attnGain = attnGain0 ./ (AI + 1 + sigma);
     
     if plotFigs
-%         figure
-        figure(1)
+        figure
+%         figure(1)
         hold on
         plot(x,attnGain0)
         plot(x,AI,'k')
@@ -176,8 +186,13 @@ if normalizeAttentionFields
 end
 
 %% Stimulation field and suppressive field
-% ExKernel = makeGaussian(x,0,ExWidth);
-ExKernel = makeGaussian(x,100,ExWidth);
+switch ExShape
+    case 'Gaussian'
+        % ExKernel = makeGaussian(x,0,ExWidth);
+        ExKernel = makeGaussian(x,100,ExWidth);
+    case 'square'
+        ExKernel = makeSquareWave(x,100,ExWidth);
+end
 
 % Crop kernels
 ExKernel = ExKernel(ExKernel>max(ExKernel)/50);
@@ -195,15 +210,15 @@ if compressiveNonlinearity
     logistic = @(x,L,k,x0) L./(1 + exp(-k.*(x-x0)));
     
     E0 = E;
-    E = logistic(E0,1,25,1);
+    E = logistic(E0,1,25,1); % 1,25,1
 %     % test the logistic (for debugging)
 %     x = 0:.01:2;
 %     y = logistic(x,1,15,1);
 %     plot(x,y)
 
     if plotFigs
-%         figure
-        figure(2)
+        figure
+%         figure(2)
         hold on
         plot(x,E0)
         plot(x,E,'r')
@@ -267,7 +282,8 @@ decision(decision==0) = guesses(decision==0);
     
 %% Plot figs
 if plotFigs
-    figure(3)
+    figure
+%     figure(3)
     % cla
     hold on
     plot(x, stimulus,'k')
