@@ -1,7 +1,7 @@
 function [decision evidence] = rd_temporalAttentionModel(soa, endoCond)
 
 %% Setup
-plotFigs = 0;
+plotFigs = 1;
 
 % soa
 if ~exist('soa','var')
@@ -21,8 +21,8 @@ ExShape = 'square'; % options: 'Gaussian', 'square'
 
 % proporational allocation of attention (based on cue validity)
 % to make all or none, set prop = [1 0]
-% in endo section, can set neutral to be max(prop) or mean(prop)
 prop = [0.75 0.25]; % [high low], or [valid invalid]
+neutralPropOp = 'max'; % 'max','mean'
 
 % attentional normalization
 normalizeAttentionFields = 1;
@@ -71,8 +71,12 @@ else
         case 'endoT2'
             endoProps = [prop(2) prop(1)];
         case 'endoT1T2'
-            endoProps = [mean(prop) mean(prop)];
-%             endoProps = [max(prop) max(prop)];
+            switch neutralPropOp
+                case 'mean'
+                    endoProps = [mean(prop) mean(prop)];
+                case 'max'
+                    endoProps = [max(prop) max(prop)];
+            end
         otherwise
             error('endoCond not recognized')
     end
