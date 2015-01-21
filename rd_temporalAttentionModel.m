@@ -25,10 +25,10 @@ prop = [0.75 0.25]; % [high low], or [valid invalid]
 neutralPropOp = 'max'; % 'max','mean'
 
 % attentional normalization
-normalizeAttentionFields = 1;
+normalizeAttentionFields = 0;
 
 % compressive nonlinearity
-compressiveNonlinearity = 1;
+compressiveNonlinearity = 0;
 
 %% Stimuli and attention components
 % basic
@@ -231,28 +231,82 @@ if compressiveNonlinearity
 end
 
 %% Accumulate evidence for the decision
-noise = noiseSigma*randn(size(x));
-% evidence = cumsum(E) + noise; % additive decision noise
-% evidence = cumsum(E + noise); % additive sensory noise
-
-% going to need separate decisions for the two stim
-% assume that the accumulation starts at stimulus onset and lasts until the
-% next stimulus. the second stimulus will have the same accumulation time
-% as the first. or can set it separately.
-stimStarts = round(stimCenters - stimWidth/2);
-for iStim = 1:nStim
-    decisionWindows(iStim,:) = stimStarts(iStim):stimStarts(iStim)+decisionWindowDur;
+integratorType = '2-stage';
+switch integratorType
+    case '1-stage'
+        noise = noiseSigma*randn(size(x));
+        % evidence = cumsum(E) + noise; % additive decision noise
+        % evidence = cumsum(E + noise); % additive sensory noise
+        
+        % going to need separate decisions for the two stim
+        % assume that the accumulation starts at stimulus onset and lasts until the
+        % next stimulus. the second stimulus will have the same accumulation time
+        % as the first. or can set it separately.
+        stimStarts = round(stimCenters - stimWidth/2);
+        for iStim = 1:nStim
+            decisionWindows(iStim,:) = stimStarts(iStim):stimStarts(iStim)+decisionWindowDur;
+        end
+        
+        evidence = zeros(size(decisionWindows));
+        for iStim = 1:nStim
+            dw = decisionWindows(iStim,:);
+            evidence(iStim,:) = cumsum(E(dw) + noise(dw)); % additive sensory noise
+        end
+        evidence = evidence*evidenceScale;
+    case '2-stage'
+%         sensoryNoise = noiseSigma*randn(size(x)); % same sensory noise applied to all stim
+        sensoryNoise = noiseSigma*randn(nStim,length(x)); % different sensory noise for different stim
+        decisionNoise = noiseSigma/100*randn(nStim,length(x));
+        
+        stimStarts = round(stimCenters - stimWidth/2);
+        dwSelector = zeros(nStim, length(x));
+        
+        for iStim = 1:nStim
+            decisionWindows(iStim,:) = stimStarts(iStim):stimStarts(iStim)+decisionWindowDur;
+            dwSelector(iStim, decisionWindows(iStim,:)) = 1;
+            % evidence for each stim should listen only to that stim
+            Estim(iStim,:) = E.*dwSelector(iStim,:);
+            
+            spreadIntegration = 1;
+            if spreadIntegration
+                expk = exp(-.01*(0:.1:200)); % exponential kernel
+                Estim0 = Estim;
+                c = conv(Estim(iStim,:),expk);
+                c1 = c*sum(Estim(iStim,:))/sum(c);
+                Estim(iStim,:) = c1(1:length(x));
+            end
+            
+            evidence(iStim,:) = cumsum(Estim(iStim,:) + sensoryNoise(iStim,:)); % additive sensory noise
+        end
+        
+        % normalize evidence pools
+        evidence0 = evidence + 0; % arbitrary constant added to prevent zero crossings, which do weird things when normalized
+        for iStim = 1:nStim
+            evidence(iStim,:) = evidence0(iStim,:)./(0.001 + sum(evidence0,1));
+        end
+%         evidence = evidence + decisionNoise;
+        
+        if plotFigs
+            figure
+            subplot(3,1,1)
+            plot(x,evidence0)
+            ylabel('evidence')
+            legend('T1','T2')
+            title('before normalization')
+            subplot(3,1,2)
+            plot(x,evidence)
+            ylabel('evidence')
+            legend('T1','T2')
+            title('after normalization')
+            subplot(3,1,3)
+            plot(x,evidence.*evidence0)
+            ylabel('evidence')
+            legend('T1','T2')
+            title('before.*after')
+        end
+    otherwise
+        error('integratorType not recognized')
 end
-
-evidence = zeros(size(decisionWindows));
-for iStim = 1:nStim
-    dw = decisionWindows(iStim,:);
-    evidence(iStim,:) = cumsum(E(dw) + noise(dw)); % additive sensory noise
-end
-evidence = evidence*evidenceScale;
-
-% allEv(:,:,iRun) = evidence;
-% iRun = iRun + 1;
 
 %% Determine which decision was selected
 % correct decision = 1, incorrect decision = -1
