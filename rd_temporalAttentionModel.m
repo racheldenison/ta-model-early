@@ -30,6 +30,12 @@ normalizeAttentionFields = 0;
 % compressive nonlinearity
 compressiveNonlinearity = 0;
 
+% evidence accumulation
+noiseSigma = 0; % 4
+evidenceScale = 0.02; % 0.02
+bounds = [.8 -.8];
+decisionType = 'firstCrossing'; % 'firstCrossing','endPoint'
+
 %% Stimuli and attention components
 % basic
 x = 0:2000; % 0:2000
@@ -125,13 +131,6 @@ IAxKernel = makeGaussian(x,0,IAxWidth);
 IAxShift = 0;
 IAxKernel = IAxKernel(IAxKernel>max(IAxKernel)/50);
 IAxKernel = [IAxKernel(end-IAxShift+1:end) IAxKernel(1:end-IAxShift)];
-
-% evidence accumulation
-noiseSigma = 0; % 4
-evidenceScale = 0.02; % 0.02
-bounds = [.8 -.8];
-decisionWindowDur = min(diff(stimCenters));
-decisionType = 'firstCrossing'; % 'firstCrossing','endPoint'
 
 %% Attention field
 if isnan(Ax)
@@ -231,6 +230,7 @@ if compressiveNonlinearity
 end
 
 %% Accumulate evidence for the decision
+decisionWindowDur = min(diff(stimCenters));
 integratorType = '2-stage';
 switch integratorType
     case '1-stage'
@@ -256,7 +256,7 @@ switch integratorType
     case '2-stage'
 %         sensoryNoise = noiseSigma*randn(size(x)); % same sensory noise applied to all stim
         sensoryNoise = noiseSigma*randn(nStim,length(x)); % different sensory noise for different stim
-        decisionNoise = noiseSigma/100*randn(nStim,length(x));
+%         decisionNoise = noiseSigma/100*randn(nStim,length(x));
         
         stimStarts = round(stimCenters - stimWidth/2);
         dwSelector = zeros(nStim, length(x));
