@@ -254,8 +254,8 @@ switch integratorType
         end
         evidence = evidence*evidenceScale;
     case '2-stage'
-%         sensoryNoise = noiseSigma*randn(size(x)); % same sensory noise applied to all stim
-        sensoryNoise = noiseSigma*randn(nStim,length(x)); % different sensory noise for different stim
+        sensoryNoise = repmat(noiseSigma*randn(size(x)),nStim,1); % same sensory noise applied to all stim
+%         sensoryNoise = noiseSigma*randn(nStim,length(x)); % different sensory noise for different stim
 %         decisionNoise = noiseSigma/100*randn(nStim,length(x));
         
         stimStarts = round(stimCenters - stimWidth/2);
@@ -282,28 +282,83 @@ switch integratorType
         % normalize evidence pools
         evidence0 = evidence + 0; % arbitrary constant added to prevent zero crossings, which do weird things when normalized
         for iStim = 1:nStim
-            evidence(iStim,:) = evidence0(iStim,:)./(0.001 + sum(evidence0,1));
+            evidenceNorm(iStim,:) = evidence0(iStim,:)./(50 + sum(evidence0,1));
         end
+%         evidence1 = evidence0.*evidenceNorm;
+        evidence1 = evidenceNorm;
 %         evidence = evidence + decisionNoise;
+
+        % see if any of the traces has reached the bound
+        % if so, cut off the original at that point and re-run
+        % note! this is not set up right now to deal with the negative
+        % bound
+        bounds = [0.4 -0.4]; % bounds getting reset here!
+        cc = find(evidence1 > bounds(1), 1, 'first');
+        [ccStim ccTime] = ind2sub(size(evidence1),cc);
+        evidence0b = evidence0;
+        evidence0b(ccStim, ccTime:end) = evidence0b(ccStim, ccTime);
+        for iStim = 1:nStim
+            evidenceNormb(iStim,:) = evidence0b(iStim,:)./(50 + sum(evidence0b,1));
+        end
+%         evidenceb = evidence0b.*evidenceNormb;
         
+        % set evidence
+        evidence = evidenceNormb;
+        
+        % another method: online normalization
+        onInput = evidence0;
+        R = onlineNormalization(x, onInput, 6);
         if plotFigs
             figure
-            subplot(3,1,1)
-            plot(x,evidence0)
-            ylabel('evidence')
-            legend('T1','T2')
-            title('before normalization')
-            subplot(3,1,2)
-            plot(x,evidence)
-            ylabel('evidence')
-            legend('T1','T2')
-            title('after normalization')
-            subplot(3,1,3)
-            plot(x,evidence.*evidence0)
-            ylabel('evidence')
-            legend('T1','T2')
-            title('before.*after')
+            subplot(2,1,1)
+            plot(x,onInput)
+            title('before online normalization')
+            subplot(2,1,2)
+            plot(x,R)
+            title('after online normalization')
         end
+        
+%         if plotFigs
+%             figure
+%             subplot(2,1,1)
+%             plot(x,evidence0)
+%             ylabel('evidence')
+%             legend('T1','T2')
+%             title('before normalization')
+%             subplot(2,1,2)
+%             plot(x,evidenceNorm)
+%             ylabel('evidence')
+%             legend('T1','T2')
+%             title('after normalization')
+% %             subplot(3,1,3)
+% %             plot(x,evidence1)
+% %             ylabel('evidence')
+% %             legend('T1','T2')
+% %             title('rate normalized?')
+%             
+%             figure
+%             subplot(2,1,1)
+%             hold on
+%             plot(x,evidence0b)
+% %             plot(x([1 end]), [bounds(1) bounds(1)], '--k')
+%             ylabel('evidence')
+%             legend('T1','T2')
+%             title('before normalization, with bound')
+%             subplot(2,1,2)
+%             hold on
+%             plot(x,evidenceNormb)
+%             plot(x([1 end]), [bounds(1) bounds(1)], '--k')
+%             ylabel('evidence')
+%             legend('T1','T2')
+%             title('after normalization, with bound')
+% %             subplot(3,1,3)
+% %             hold on
+% %             plot(x,evidenceb)
+% %             plot(x([1 end]), [bounds(1) bounds(1)], '--k')
+% %             ylabel('evidence')
+% %             legend('T1','T2')
+% %             title('rate normalized?')
+%         end
     otherwise
         error('integratorType not recognized')
 end
@@ -314,8 +369,8 @@ switch decisionType
     case 'firstCrossing'
         % We could take the first boundary crossing
         for iStim = 1:nStim
-            cc = find(evidence(iStim,:) > bounds(1), 1, 'first');
-            ic = find(evidence(iStim,:) < bounds(2), 1, 'first');
+            cc = find(evidence(iStim,:) >= bounds(1), 1, 'first');
+            ic = find(evidence(iStim,:) <= bounds(2), 1, 'first');
             
             if isempty(cc) && isempty(ic) % no crossing
                 d = 0;
