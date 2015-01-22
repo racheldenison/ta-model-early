@@ -267,56 +267,88 @@ switch integratorType
             % evidence for each stim should listen only to that stim
             Estim(iStim,:) = E.*dwSelector(iStim,:);
             
-            spreadIntegration = 1;
-            if spreadIntegration
-                expk = exp(-.01*(0:.1:200)); % exponential kernel
+            spreadResponse = 1;
+            if spreadResponse
+                expk = exp(-.02*(0:.1:60)); % exponential kernel % -.01
                 Estim0 = Estim;
                 c = conv(Estim(iStim,:),expk);
                 c1 = c*sum(Estim(iStim,:))/sum(c);
                 Estim(iStim,:) = c1(1:length(x));
             end
-            
+        end
+        
+        % normalize responses
+        Estim0 = Estim;
+        for iStim = 1:nStim
+            Estim(iStim,:) = Estim(iStim,:)./(.001 + sum(Estim,1));
+        end
+        
+        % integrate
+        for iStim = 1:nStim
             evidence(iStim,:) = cumsum(Estim(iStim,:) + sensoryNoise(iStim,:)); % additive sensory noise
         end
         
-        % normalize evidence pools
-        evidence0 = evidence + 0; % arbitrary constant added to prevent zero crossings, which do weird things when normalized
-        for iStim = 1:nStim
-            evidenceNorm(iStim,:) = evidence0(iStim,:)./(50 + sum(evidence0,1));
-        end
-%         evidence1 = evidence0.*evidenceNorm;
-        evidence1 = evidenceNorm;
-%         evidence = evidence + decisionNoise;
+        % plot normalize and integrate
+        figure
+        subplot(3,1,1)
+        plot(x,Estim0)
+        title('Estim before normalization')
+        subplot(3,1,2)
+        plot(x,Estim)
+        title('Estim after normalization')
+        subplot(3,1,3)
+        plot(x,evidence)
+        title('integrated evidence')
+        
+%         % normalize evidence pools
+%         evidence0 = evidence + 0; % arbitrary constant added to prevent zero crossings, which do weird things when normalized
+%         for iStim = 1:nStim
+%             evidenceNorm(iStim,:) = evidence0(iStim,:)./(50 + sum(evidence0,1));
+%         end
+% %         evidence1 = evidence0.*evidenceNorm;
+%         evidence1 = evidenceNorm;
+% %         evidence = evidence + decisionNoise;
+% 
+%         % see if any of the traces has reached the bound
+%         % if so, cut off the original at that point and re-run
+%         % note! this is not set up right now to deal with the negative
+%         % bound
+%         bounds = [0.4 -0.4]; % bounds getting reset here!
+%         cc = find(evidence1 > bounds(1), 1, 'first');
+%         [ccStim ccTime] = ind2sub(size(evidence1),cc);
+%         evidence0b = evidence0;
+%         evidence0b(ccStim, ccTime:end) = evidence0b(ccStim, ccTime);
+%         for iStim = 1:nStim
+%             evidenceNormb(iStim,:) = evidence0b(iStim,:)./(50 + sum(evidence0b,1));
+%         end
+% %         evidenceb = evidence0b.*evidenceNormb;
+%         
+%         % set evidence
+%         evidence = evidenceNormb;
 
-        % see if any of the traces has reached the bound
-        % if so, cut off the original at that point and re-run
-        % note! this is not set up right now to deal with the negative
-        % bound
-        bounds = [0.4 -0.4]; % bounds getting reset here!
-        cc = find(evidence1 > bounds(1), 1, 'first');
-        [ccStim ccTime] = ind2sub(size(evidence1),cc);
-        evidence0b = evidence0;
-        evidence0b(ccStim, ccTime:end) = evidence0b(ccStim, ccTime);
-        for iStim = 1:nStim
-            evidenceNormb(iStim,:) = evidence0b(iStim,:)./(50 + sum(evidence0b,1));
-        end
-%         evidenceb = evidence0b.*evidenceNormb;
-        
-        % set evidence
-        evidence = evidenceNormb;
-        
-        % another method: online normalization
-        onInput = evidence0;
-        R = onlineNormalization(x, onInput, 6);
-        if plotFigs
-            figure
-            subplot(2,1,1)
-            plot(x,onInput)
-            title('before online normalization')
-            subplot(2,1,2)
-            plot(x,R)
-            title('after online normalization')
-        end
+
+%         % max out integrated evidence at bound
+%         bounds = [60 -60]; % bound getting reset here!
+%         evidence0 = evidence;
+%         evidence(evidence>bounds(1)) = bounds(1);
+%         evidence(evidence<bounds(2)) = bounds(2);
+%         
+%         % another method: online normalization
+%         onInput = Estim;
+% %         onInput = evidence;
+%         R = integrateAndNormalize(x, onInput);
+% %         R = onlineNormalization(x, onInput);
+%         if plotFigs
+%             figure
+%             subplot(2,1,1)
+%             plot(x,onInput)
+% %             title('before online normalization')
+%             title('before integrate & normalize')
+%             subplot(2,1,2)
+%             plot(x,R)
+% %             title('after online normalization')
+%             title('after integrate & normalize')
+%         end
         
 %         if plotFigs
 %             figure

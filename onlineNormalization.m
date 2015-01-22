@@ -20,8 +20,8 @@ end
 B = 0;
 w = 1;
 
-R(1:2,1) = 0;
-G(1:2,1) = 0;
+R(1:size(V,1),1) = 0;
+G(1:size(V,1),1) = 0;
 
 for t = 1:length(time)-1
     % excitatory
