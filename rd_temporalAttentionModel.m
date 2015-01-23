@@ -277,16 +277,18 @@ switch integratorType
             end
         end
         
-%         % normalize responses
+        % normalize responses
+        n = 1.7;
+        sigma = .05;
         Estim0 = Estim;
-%         for iStim = 1:nStim
-%             Estim(iStim,:) = Estim(iStim,:)./(.001 + sum(Estim,1));
-%         end
-%         
-%         % integrate
-%         for iStim = 1:nStim
-%             evidence(iStim,:) = cumsum(Estim(iStim,:) + sensoryNoise(iStim,:)); % additive sensory noise
-%         end
+        for iStim = 1:nStim
+            Estim(iStim,:) = Estim(iStim,:).^n./(sigma + sum(Estim.^2,1));
+        end
+        
+        % integrate
+        for iStim = 1:nStim
+            evidence(iStim,:) = cumsum(Estim(iStim,:) + sensoryNoise(iStim,:)); % additive sensory noise
+        end
         
 %         evidence = integrateWithRateNormalization(x,Estim,4);
         
