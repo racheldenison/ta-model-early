@@ -92,7 +92,7 @@ else
         ylabel('evidence')
         title(intervalNames{iT})
         xlim(soaLims)
-        ylim(evLims)
+%         ylim(evLims)
         
         if iT==1
             legend(p1, cueValidityNames,'location','northeast')
@@ -114,7 +114,7 @@ else
         ylabel('cuing effect / average evidence')
         title(intervalNames{iT})
         xlim(soaLims)
-        ylim(evLims)
+%         ylim(evLims)
     end
     legend('cuing effect','average evidence')
 end

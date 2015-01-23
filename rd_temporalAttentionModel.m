@@ -1,7 +1,7 @@
 function [decision evidence] = rd_temporalAttentionModel(soa, endoCond)
 
 %% Setup
-plotFigs = 1;
+plotFigs = 0;
 
 % soa
 if ~exist('soa','var')
@@ -277,28 +277,32 @@ switch integratorType
             end
         end
         
-        % normalize responses
+%         % normalize responses
         Estim0 = Estim;
-        for iStim = 1:nStim
-            Estim(iStim,:) = Estim(iStim,:)./(.001 + sum(Estim,1));
-        end
+%         for iStim = 1:nStim
+%             Estim(iStim,:) = Estim(iStim,:)./(.001 + sum(Estim,1));
+%         end
+%         
+%         % integrate
+%         for iStim = 1:nStim
+%             evidence(iStim,:) = cumsum(Estim(iStim,:) + sensoryNoise(iStim,:)); % additive sensory noise
+%         end
         
-        % integrate
-        for iStim = 1:nStim
-            evidence(iStim,:) = cumsum(Estim(iStim,:) + sensoryNoise(iStim,:)); % additive sensory noise
-        end
+%         evidence = integrateWithRateNormalization(x,Estim,4);
         
         % plot normalize and integrate
-        figure
-        subplot(3,1,1)
-        plot(x,Estim0)
-        title('Estim before normalization')
-        subplot(3,1,2)
-        plot(x,Estim)
-        title('Estim after normalization')
-        subplot(3,1,3)
-        plot(x,evidence)
-        title('integrated evidence')
+        if plotFigs
+            figure
+            subplot(3,1,1)
+            plot(x,Estim0)
+            title('Estim before normalization')
+            subplot(3,1,2)
+            plot(x,Estim)
+            title('Estim after normalization')
+            subplot(3,1,3)
+            plot(x,evidence)
+            title('integrated evidence')
+        end
         
 %         % normalize evidence pools
 %         evidence0 = evidence + 0; % arbitrary constant added to prevent zero crossings, which do weird things when normalized
@@ -435,9 +439,14 @@ if plotFigs
     plot(x, attnGain,'k')
     plot(x, Eraw,'c')
     plot(x, E,'g')
-    for iStim = 1:nStim
-        dw = decisionWindows(iStim,:);
-        plot(x(dw), evidence(iStim,:));
+    switch integratorType
+        case '1-stage'
+            for iStim = 1:nStim
+                dw = decisionWindows(iStim,:);
+                plot(x(dw), evidence(iStim,:));
+            end
+        case '2-stage'
+            plot(x, evidence);
     end
     plot(IORGain,'r')
     % plot(x, I,'r')
