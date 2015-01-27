@@ -3,7 +3,7 @@
 % wrapper for rd_temporalAttentionModel
 
 %% setup
-% nTrials = 10000;
+% nTrials = 1000;
 nTrials = 1;
 soas = [100:50:500 800];
 % soas = [100 250 800];
@@ -32,6 +32,7 @@ for iEndo = 1:numel(endoConds)
         
         % store acc mean
         accMean(:,iSOA,iEndo) = mean(acc,2);
+        accSte(:,iSOA,iEndo) = std(acc,0,2)./sqrt(size(acc,2));
         
         evMean(:,iSOA,iEndo) = mean(e(:,end,:),3);
     end
@@ -54,6 +55,22 @@ if isequal(endoConds,{'no-endo','endoT1','endoT2','endoT1T2'})
     for iT = 1:numel(evValidity)
         evCueEff{iT} = squeeze(evValidity{iT}(1,:,:) - evValidity{iT}(2,:,:));
         evCueAve{iT} = squeeze(mean(evValidity{iT},1));
+    end
+    
+    accValidity{1}(1,:) = accMean(1,:,2); % T1 valid
+    accValidity{1}(2,:) = accMean(1,:,3); % T1 invalid
+    accValidity{1}(3,:) = accMean(1,:,4); % T1 neutral - endoT1T2
+    accValidity{1}(4,:) = accMean(1,:,1); % T1 neutral - no endo
+    
+    accValidity{2}(1,:) = accMean(2,:,3); % T2 valid
+    accValidity{2}(2,:) = accMean(2,:,2); % T2 invalid
+    accValidity{2}(3,:) = accMean(2,:,4); % T2 neutral - endoT1T2
+    accValidity{2}(4,:) = accMean(2,:,1); % T2 neutral - no endo
+    
+    % cuing effect and average across cue validities
+    for iT = 1:numel(accValidity)
+        accCueEff{iT} = squeeze(accValidity{iT}(1,:,:) - accValidity{iT}(2,:,:));
+        accCueAve{iT} = squeeze(mean(accValidity{iT},1));
     end
 end
 
