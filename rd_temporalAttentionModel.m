@@ -21,7 +21,7 @@ ExShape = 'square'; % options: 'Gaussian', 'square'
 
 % proporational allocation of attention (based on cue validity)
 % to make all or none, set prop = [1 0]
-prop = [0.75 0.25]; % [high low], or [valid invalid]
+prop = [.6 .4]; % [high low], or [valid invalid]
 neutralPropOp = 'max'; % 'max','mean'
 
 % attentional normalization
@@ -31,7 +31,7 @@ normalizeAttentionFields = 0;
 compressiveNonlinearity = 0;
 
 % evidence accumulation
-noiseSigma = 0; % 4
+noiseSigma = 0; % 0 % 4
 evidenceScale = 0.02; % 0.02
 bounds = [.8 -.8];
 decisionType = 'firstCrossing'; % 'firstCrossing','endPoint'
@@ -278,17 +278,21 @@ switch integratorType
         end
         
         % normalize responses
-        n = 1.7;
-        sigma = .05;
+        n = 2;
+        sigma = 0.01;
         Estim0 = Estim;
         for iStim = 1:nStim
-            Estim(iStim,:) = Estim(iStim,:).^n./(sigma + sum(Estim.^2,1));
+            Estim(iStim,:) = Estim0(iStim,:).^n./(sigma + sum(Estim0.^n,1));
         end
         
         % integrate
         for iStim = 1:nStim
             evidence(iStim,:) = cumsum(Estim(iStim,:) + sensoryNoise(iStim,:)); % additive sensory noise
         end
+        
+        % bound
+        bounds = [375 -375]; % bounds getting reset here!
+        evidence(evidence>bounds(1)) = bounds(1);
         
 %         evidence = integrateWithRateNormalization(x,Estim,4);
         
