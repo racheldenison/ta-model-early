@@ -30,6 +30,9 @@ normalizeAttentionFields = 0;
 % compressive nonlinearity
 compressiveNonlinearity = 0;
 
+% extend response (early)
+extendResponse = 0;
+
 % evidence accumulation
 noiseSigma = 0; % 0 % 4
 evidenceScale = 0.02; % 0.02
@@ -112,8 +115,8 @@ end
 IORx = stimCenters + 300 - round(stimWidth/2);
 IORxWidth = AxWidth*4;
 IORAmps = repmat((Apeak-Abase)/2, 1, nStim);
-% IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
-IORGain = NaN;
+IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
+% IORGain = NaN;
 
 % symmetrical suppression
 ISx = stimCenters;
@@ -229,9 +232,17 @@ if compressiveNonlinearity
     end
 end
 
+%% Extend response
+if extendResponse
+    expk = exp(-.1*(0:.1:20)); % exponential kernel % -.02
+    c = conv(E,expk);
+    c1 = c*sum(E)/sum(c);
+    E = c1(1:length(x));
+end
+
 %% Accumulate evidence for the decision
 decisionWindowDur = min(diff(stimCenters));
-integratorType = '2-stage';
+integratorType = '1-stage';
 switch integratorType
     case '1-stage'
         noise = noiseSigma*randn(size(x));
