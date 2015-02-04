@@ -33,9 +33,9 @@ compressiveNonlinearity = 0;
 % extend response (early)
 extendResponse = 0;
 
-% distribute attention (limited allocation within a span)
-distribute = 1;
-if distribute
+% distribute endo attention (limited allocation within a span)
+distributeEndo = 1;
+if distributeEndo
     span = 500; % ms
     totalAttn = 1 + soa/span;
     if totalAttn>2
@@ -186,10 +186,6 @@ if normalizeAttentionFields
     AIxKernel = makeGaussian(x(1:1000),500,AIxWidth); % note, the kernel has to be no longer than it needs to be
     % Suppressive drive
     AI = conv2sepYcirc(attnGain - Abase, AIxKernel);
-%     AI = zeros(size(x));
-%     for i = 1:numel(Endox)
-%         AI = AI + rd_nmMakeStim(x, Endox(i), AIxWidth, EndoAmps(i)/2, 'gaussian') + 1;
-%     end
     
     % Normalization
     attnGain0 = attnGain; % just store original attnGain (for debugging)
