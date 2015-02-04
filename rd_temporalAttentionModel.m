@@ -33,6 +33,21 @@ compressiveNonlinearity = 0;
 % extend response (early)
 extendResponse = 0;
 
+% distribute attention (limited allocation within a span)
+distribute = 1;
+if distribute
+    span = 500; % ms
+    totalAttn = 1 + soa/span;
+    if totalAttn>2
+        totalAttn = 2;
+    end
+    if strcmp(endoCond, 'endoT1T2')
+        prop = distributeAttention(totalAttn, 0);
+    else
+        prop = distributeAttention(totalAttn, 1, prop(1));
+    end
+end
+
 % evidence accumulation
 noiseSigma = 0; % 0 % 4
 evidenceScale = 0.02; % 0.02
@@ -56,7 +71,7 @@ stimShape = 'square'; % 'gaussian','square'
 stimulus = rd_nmMakeStim(x, stimCenters, stimWidth, stimAmps, stimShape);
 
 % exo attention
-Ax = stimCenters + 100 - round(stimWidth/2);
+Ax = stimCenters + 100 - round(stimWidth/2); % 100
 AxWidth = 30;
 Apeak =  2;
 Abase = 1;
@@ -115,8 +130,8 @@ end
 IORx = stimCenters + 300 - round(stimWidth/2);
 IORxWidth = AxWidth*4;
 IORAmps = repmat((Apeak-Abase)/2, 1, nStim);
-IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
-% IORGain = NaN;
+% IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
+IORGain = NaN;
 
 % symmetrical suppression
 ISx = stimCenters;
