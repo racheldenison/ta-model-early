@@ -31,10 +31,13 @@ normalizeAttentionFields = 0;
 compressiveNonlinearity = 0;
 
 % extend response (early)
-extendResponse = 0;
+extendResponse = 1;
+
+% evidence ceiling
+evidenceCeiling = 0;
 
 % distribute endo attention (limited allocation within a span)
-distributeEndo = 1;
+distributeEndo = 0;
 if distributeEndo
     span = 500; % ms
     totalAttn = 1 + soa/span;
@@ -49,9 +52,9 @@ if distributeEndo
 end
 
 % evidence accumulation
-noiseSigma = 0; % 0 % 4
+noiseSigma = 4; % 0 % 4
 evidenceScale = 0.02; % 0.02
-bounds = [.8 -.8];
+bounds = [0.8 -0.8];
 decisionType = 'firstCrossing'; % 'firstCrossing','endPoint'
 
 %% Stimuli and attention components
@@ -130,8 +133,8 @@ end
 IORx = stimCenters + 300 - round(stimWidth/2);
 IORxWidth = AxWidth*4;
 IORAmps = repmat((Apeak-Abase)/2, 1, nStim);
-% IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
-IORGain = NaN;
+IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
+% IORGain = NaN;
 
 % symmetrical suppression
 ISx = stimCenters;
@@ -275,6 +278,13 @@ switch integratorType
             evidence(iStim,:) = cumsum(E(dw) + noise(dw)); % additive sensory noise
         end
         evidence = evidence*evidenceScale;
+        
+        % evidence ceiling
+        if evidenceCeiling
+            ceiling = 1.6; % 2.3 (limited) % 1.6 (original+extended)
+            evidence(evidence>ceiling) = ceiling;
+        end
+        
     case '2-stage'
         sensoryNoise = repmat(noiseSigma*randn(size(x)),nStim,1); % same sensory noise applied to all stim
 %         sensoryNoise = noiseSigma*randn(nStim,length(x)); % different sensory noise for different stim
@@ -312,9 +322,11 @@ switch integratorType
             evidence(iStim,:) = cumsum(Estim(iStim,:) + sensoryNoise(iStim,:)); % additive sensory noise
         end
         
-        % bound
-        bounds = [375 -375]; % bounds getting reset here!
-        evidence(evidence>bounds(1)) = bounds(1);
+        % evidence ceiling
+        if evidenceCeiling
+            ceiling = 375;
+            evidence(evidence>ceiling) = ceiling;
+        end
         
 %         evidence = integrateWithRateNormalization(x,Estim,4);
         
@@ -459,8 +471,8 @@ decision(decision==0) = guesses(decision==0);
     
 %% Plot figs
 if plotFigs
-    figure
-%     figure(3)
+%     figure
+    figure(1)
     % cla
     hold on
     plot(x, stimulus,'k')

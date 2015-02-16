@@ -3,10 +3,10 @@
 % wrapper for rd_temporalAttentionModel
 
 %% setup
-% nTrials = 1000;
-nTrials = 1;
-soas = [100:50:500 800];
-% soas = [100 250 800];
+nTrials = 1000;
+% nTrials = 1;
+% soas = [100:50:500 800];
+soas = [100 250 800];
 endoConds = {'no-endo','endoT1','endoT2','endoT1T2'};
 
 %% run conditions
@@ -91,11 +91,49 @@ else
     % sorted by validity
     cueValidityNames = {'valid','invalid','both','none'};
     intervalNames = {'early','late'};
+    accLims = [0.5 1];
     evLims = [0 1.5];
     soaLims = [soas(1)-100 soas(end)+100];
     colors = get(0,'DefaultAxesColorOrder');
     axTitle = '';
     
+    % acc
+    figure
+    for iT = 1:numel(accValidity)
+        subplot(1,numel(accValidity),iT)
+        hold on
+        
+        p1 = plot(repmat(soas',1,numel(cueValidityNames)),...
+            accValidity{iT}', '.-', 'MarkerSize', 20);
+        
+        xlabel('soa')
+        ylabel('accuracy')
+        title(intervalNames{iT})
+        xlim(soaLims)
+        ylim(accLims)
+        
+        if iT==1
+            legend(p1, cueValidityNames,'location','northeast')
+        end
+    end
+    
+    figure
+    for iT = 1:numel(accValidity)
+        subplot(1,numel(accValidity),iT)
+        hold on
+        
+        plot(soas, accCueEff{iT})
+        plot(soas, accCueAve{iT},'k')
+        
+        xlabel('soa')
+        ylabel('cuing effect / accuracy')
+        title(intervalNames{iT})
+        xlim(soaLims)
+        ylim([0 1])
+    end
+    legend('cuing effect','average accuracy')
+    
+    % evidence
     figure
     for iT = 1:numel(evValidity)
         subplot(1,numel(evValidity),iT)
