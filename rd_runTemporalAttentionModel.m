@@ -3,10 +3,10 @@
 % wrapper for rd_temporalAttentionModel
 
 %% setup
-nTrials = 1000;
-% nTrials = 1;
-% soas = [100:50:500 800];
-soas = [100 250 800];
+% nTrials = 1000;
+nTrials = 1;
+soas = [100:50:500 800];
+% soas = [100 250 800];
 endoConds = {'no-endo','endoT1','endoT2','endoT1T2'};
 
 %% run conditions

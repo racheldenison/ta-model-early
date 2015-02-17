@@ -1,4 +1,25 @@
 function [decision evidence] = rd_temporalAttentionModel(soa, endoCond)
+%
+% Notes on settings for specific models:
+% 1) Original + extended
+%   IOR is on
+%   extendResponse = 1;
+%   evidenceCeiling = 1;
+%   integratorType = '1-stage'
+%   ceiling = 1.6
+%
+% 2) Limited within a span
+%   distributeEndo = 1;
+%   evidenceCeiling = 1;
+%   integratorType = '1-stage'
+%   ceiling = 2.3
+%
+% 3) Late-stage competition (aka "normalize then integrate extended     responses)
+%   evidenceCeiling = 1;
+%   integratorType = '2-stage'
+%   ceiling = 375
+%
+% Note evidenceCeiling can be turned off if looking at accuracy (with noise).
 
 %% Setup
 plotFigs = 0;
@@ -31,13 +52,13 @@ normalizeAttentionFields = 0;
 compressiveNonlinearity = 0;
 
 % extend response (early)
-extendResponse = 1;
+extendResponse = 0;
 
 % evidence ceiling
-evidenceCeiling = 0;
+evidenceCeiling = 1;
 
 % distribute endo attention (limited allocation within a span)
-distributeEndo = 0;
+distributeEndo = 1;
 if distributeEndo
     span = 500; % ms
     totalAttn = 1 + soa/span;
@@ -51,10 +72,15 @@ if distributeEndo
     end
 end
 
+% integration settings (model-specific)
+integratorType = '1-stage';
+ceiling = 2.3; % 2.3 (limited) % 1.6 (original+extended) % 375 (late competition)
+
 % evidence accumulation
-noiseSigma = 4; % 0 % 4
+noiseSigma = 0; % 0 % 4
 evidenceScale = 0.02; % 0.02
-bounds = [0.8 -0.8];
+bounds = [1.8 -1.8];
+% bounds = [275 -275];
 decisionType = 'firstCrossing'; % 'firstCrossing','endPoint'
 
 %% Stimuli and attention components
@@ -133,8 +159,8 @@ end
 IORx = stimCenters + 300 - round(stimWidth/2);
 IORxWidth = AxWidth*4;
 IORAmps = repmat((Apeak-Abase)/2, 1, nStim);
-IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
-% IORGain = NaN;
+% IORGain = rd_nmMakeStim(x, IORx, IORxWidth, IORAmps, 'gaussian');
+IORGain = NaN;
 
 % symmetrical suppression
 ISx = stimCenters;
@@ -256,7 +282,6 @@ end
 
 %% Accumulate evidence for the decision
 decisionWindowDur = min(diff(stimCenters));
-integratorType = '1-stage';
 switch integratorType
     case '1-stage'
         noise = noiseSigma*randn(size(x));
@@ -281,7 +306,6 @@ switch integratorType
         
         % evidence ceiling
         if evidenceCeiling
-            ceiling = 1.6; % 2.3 (limited) % 1.6 (original+extended)
             evidence(evidence>ceiling) = ceiling;
         end
         
@@ -324,7 +348,6 @@ switch integratorType
         
         % evidence ceiling
         if evidenceCeiling
-            ceiling = 375;
             evidence(evidence>ceiling) = ceiling;
         end
         
