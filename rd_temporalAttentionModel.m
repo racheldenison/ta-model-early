@@ -58,7 +58,7 @@ extendResponse = 0;
 evidenceCeiling = 1;
 
 % distribute endo attention (limited allocation within a span)
-distributeEndo = 1;
+distributeEndo = 0;
 if distributeEndo
     span = 500; % ms
     totalAttn = 1 + soa/span;
@@ -73,8 +73,8 @@ if distributeEndo
 end
 
 % integration settings (model-specific)
-integratorType = '1-stage';
-ceiling = 2.3; % 2.3 (limited) % 1.6 (original+extended) % 375 (late competition)
+integratorType = '2-stage';
+ceiling = 375; % 2.3 (limited) % 1.6 (original+extended) % 375 (late competition)
 
 % evidence accumulation
 noiseSigma = 0; % 0 % 4
@@ -89,13 +89,14 @@ x = 0:2000; % 0:2000
 ExWidth = 10;
 baselineMod = 0;
 sigma = 1e-6;
+contrast = 1;
 
 % stim
 % soa = 250;
 stimCenters = 100 + soa*(0:1); % start at 100 so we have all positive times
 nStim = numel(stimCenters);
 stimWidth = 50; % 5, 50
-stimAmps = ones(1,nStim);
+stimAmps = ones(1,nStim).*contrast;
 stimShape = 'square'; % 'gaussian','square'
 stimulus = rd_nmMakeStim(x, stimCenters, stimWidth, stimAmps, stimShape);
 
