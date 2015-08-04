@@ -8,13 +8,13 @@ function [decision evidence] = rd_temporalAttentionModel(soa, endoCond)
 %   integratorType = '1-stage'
 %   ceiling = 1.6
 %
-% 2) Limited within a span
+% 3) Limited within a span
 %   distributeEndo = 1;
 %   evidenceCeiling = 1;
 %   integratorType = '1-stage'
 %   ceiling = 2.3
 %
-% 3) Late-stage competition (aka "normalize then integrate extended     responses)
+% 2) Late-stage competition (aka "normalize then integrate extended     responses)
 %   evidenceCeiling = 1;
 %   integratorType = '2-stage'
 %   ceiling = 375
@@ -22,7 +22,7 @@ function [decision evidence] = rd_temporalAttentionModel(soa, endoCond)
 % Note evidenceCeiling can be turned off if looking at accuracy (with noise).
 
 %% Setup
-plotFigs = 0;
+plotFigs = 1;
 
 % soa
 if ~exist('soa','var')
@@ -89,7 +89,7 @@ x = 0:2000; % 0:2000
 ExWidth = 10;
 baselineMod = 0;
 sigma = 1e-6;
-contrast = 1;
+contrast = 1; % 1
 
 % stim
 % soa = 250;
@@ -523,4 +523,46 @@ if plotFigs
     legend('stim','attn','Eraw','E','evidence')
     
     title(sprintf('soa = %d ms, %s', soa, endoCond))
+
+    
+    figure(2)
+    if isnan(IORGain)
+        ior = 0;
+    else
+        ior = IORGain;
+    end
+    s = 0.8;
+    set(gcf, 'Position', [100 100 200 600])
+    cla
+    hold on
+    plot(x, 13.5 + stimulus,'k')
+    plot(x, 11 + attnGainX - ior, 'Color', [153 124 107]/255)
+    plot(x, 9 + EndoGain, 'Color', [185 178 170]/255)
+    plot(x, 6 + attnGain, 'Color', [235 114 96]/255)
+%     plot(x, Eraw,'c')
+    plot(x, 4 + Eraw.*attnGain*s, 'Color', [41 171 164]/255)
+    
+    switch integratorType
+        case '1-stage'
+            plot(x, 2 + E*s, 'Color', [58 154 217]/255)
+            for iStim = 1:nStim
+                dw = decisionWindows(iStim,:);
+                plot(x(dw), evidence(iStim,:)*s, 'Color', [53 68 88]/255);
+            end
+        case '2-stage'
+            plot(x, 2 + Estim*s, 'Color', [58 154 217]/255)
+            plot(x, evidence/400, 'Color', [53 68 88]/255);
+    end
+    xlim([0 1000])
+    xlabel('time (ms)')
+%     ylabel('activity')
+    set(gca,'YTick',[])
+    ll = findall(gca,'Type','line');
+    set(ll,'Linewidth',2);
+    turnwhite
+    
+    % legend('stim','attn','Eraw','E','I','R')
+%     legend('stim','attn','Eraw','E','evidence')
+    
+%     title(sprintf('soa = %d ms, %s', soa, endoCond))
 end
