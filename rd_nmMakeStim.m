@@ -26,6 +26,8 @@ for iStim = 1:numel(stimCenters)
             stim(iStim,:) = makeGaussian(x,stimCenters(iStim),stimWidth,stimAmps(iStim));
         case 'square'
             stim(iStim,:) = makeSquareWave(x,stimCenters(iStim),stimWidth,stimAmps(iStim));
+        case 'gamma'
+            stim(iStim,:) = makeGamma(x,stimCenters(iStim),[],[],stimAmps(iStim));
         otherwise
             error('stimShape not recognized')
     end
